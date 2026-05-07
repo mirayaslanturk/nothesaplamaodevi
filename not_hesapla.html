@@ -1,0 +1,135 @@
+<!-- 
+    Bootstrap 5 ve SweetAlert2 kütüphanelerini CDN ile projeye dahil ediyoruz. 
+    Not hesaplama işlemini, kullanıcıdan alınan vize ve final notlarını kontrol edip,
+    sonucun ekranda SweetAlert ile şık şekilde gösterilmesini sağlıyoruz.
+    Her adım detaylı Türkçe açıklama satırları ile anlatıldı.
+-->
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Not Hesaplama Formu</title>
+    <!-- Bootstrap 5 CSS CDN bağlantısı.
+         Modern ve responsive arayüz sağlar -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- SweetAlert2 özellikli popup'ları sağlayan CDN bağlantısı.
+         Sonuç ve hata mesajlarını güzelce göstermek için kullanılır -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body style="background: #f8fafc;">
+    <div class="container mt-5">
+        <!-- Sayfa başlığı: Kullanıcıya hangi formda olduğunu belirtir -->
+        <h2 class="mb-4 text-center">Not Hesaplama Formu</h2>
+        <!-- Bootstrap kart yapısı: Şık ve kutulu bir form görüntüsü için -->
+        <div class="card shadow mx-auto" style="max-width: 450px;">
+            <div class="card-body">
+                <!-- Form etiketi: Vize ve final notlarının girileceği alan, id ile erişim kolaylığı sağlar -->
+                <form id="notForm">
+                    <!-- Vize notu için giriş alanı.
+                         Kullanıcıya 0-100 arası bir sayı girmesi gerektiği belirtilir -->
+                    <div class="mb-3">
+                        <label for="vize" class="form-label">Vize Notu</label>
+                        <input type="number" class="form-control" id="vize" name="vize" min="0" max="100" required>
+                    </div>
+                    <!-- Final notu için giriş alanı.
+                         Aynı şekilde 0-100 arası olmalı ve boş bırakılamaz -->
+                    <div class="mb-3">
+                        <label for="final" class="form-label">Final Notu</label>
+                        <input type="number" class="form-control" id="final" name="final" min="0" max="100" required>
+                    </div>
+                    <!-- Hesapla butonu: Formu göndermek için kullanılır -->
+                    <button type="submit" class="btn btn-primary w-100">Hesapla</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Bootstrap 5 JavaScript ve bağımlılıkları.
+         Bootstrap'ın modül ve dinamik bileşenlerinin düzgün çalışması için gerekli -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        /**
+         * Notların geçerliliğini kontrol eden fonksiyon.
+         * Burada, girilen vize ve final notlarının sayı olup olmadığı ve
+         * 0 ile 100 arasında bulunup bulunmadığı denetleniyor.
+         *
+         * @param {number} vize - Kullanıcının girdiği vize notu
+         * @param {number} final - Kullanıcının girdiği final notu
+         * @returns {Object} - Sonuç: { valid: boolean, message: string }
+         */
+        function validateNotes(vize, final) {
+            // Girilen değerler sayı mı diye bakılır, değilse uyarı döndürülür
+            if (isNaN(vize) || isNaN(final)) {
+                // Türkçe uyarı mesajı ayrıntılı olarak verilir
+                return { valid: false, message: 'Lütfen vize ve final notlarını rakamsal olarak giriniz.' };
+            }
+            // Notlar 0-100 aralığında mı kontrol edilir
+            if (vize < 0 || vize > 100 || final < 0 || final > 100) {
+                return { valid: false, message: 'Notlar 0 ile 100 arasında olmalıdır.' };
+            }
+            // Eğer her şey uygunsa başarılı bilgi döndürülür
+            return { valid: true, message: '' };
+        }
+
+        /**
+         * Not hesaplama fonksiyonu.
+         * Vize %40, final %60 etkili olacak şekilde aritmetik ortalama döndürür.
+         *
+         * @param {number} vize - Girilen vize notu
+         * @param {number} final - Girilen final notu
+         * @returns {number} - Sonuç notu
+         */
+        function calculateNote(vize, final) {
+            // Hesaplamada vize %40, final %60 etkilidir
+            return (vize * 0.4) + (final * 0.6);
+        }
+
+        // Formun gönderilmesini (submit) yakalayan event listener ekleniyor
+        document.getElementById('notForm').addEventListener('submit', function(e) {
+            // Formun varsayılan olarak sayfayı yenilemesini engelleriz
+            e.preventDefault();
+
+            try {
+                // Vize ve final input'lardaki değerler okunup sayıya çevrilir
+                let vize = parseFloat(document.getElementById('vize').value);
+                let final = parseFloat(document.getElementById('final').value);
+
+                // Notların geçerli olup olmadığı, ayrı fonksiyon aracılığıyla kontrol edilir
+                const validation = validateNotes(vize, final);
+
+                // Eğer bir validasyon hatası varsa SweetAlert ile kullanıcıya gösterilir
+                if (!validation.valid) {
+                    Swal.fire({
+                        icon: 'warning', // Uyarı ikonu kullanılır
+                        title: 'Geçersiz Giriş',
+                        text: validation.message // Detaylı Türkçe hata mesajı
+                    });
+                    return; // Hata varsa işlemi burada durdur
+                }
+
+                // Hesaplama fonksiyonuna geçerli notlar verilir, sonuç alınır
+                const toplamNot = calculateNote(vize, final);
+
+                // Sonuç SweetAlert ile kullanıcıya detaylı bir şekilde gösterilir
+                Swal.fire({
+                    icon: 'success', // Başarı ikonu
+                    title: 'Not Başarıyla Hesaplandı',
+                    html: `<b>Vize:</b> ${vize}<br>
+                           <b>Final:</b> ${final}<br>
+                           <hr>
+                           <b>Toplam Not :</b> ${toplamNot.toFixed(2)}`,
+                    confirmButtonText: 'Tamam' // Onay butonu için Türkçe
+                });
+
+            } catch (err) {
+                // Beklenmedik herhangi bir kod hatasında yine kullanıcı bilgilendirilir
+                Swal.fire({
+                    icon: 'error', // Hata ikonu görüntülenir
+                    title: 'Bir Hata Oluştu',
+                    text: 'Beklenmeyen bir hata meydana geldi. Lütfen tekrar deneyiniz.'
+                });
+            }
+        });
+    </script>
+</body>
+</html>

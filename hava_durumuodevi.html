@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hissedilen Sıcaklık (Wind Chill / Heat Index)</title>
+  <style>
+    :root{
+      --bg1:#0b1220;
+      --bg2:#0f1b33;
+      --card:rgba(255,255,255,.08);
+      --card2:rgba(255,255,255,.06);
+      --text:#e5e7eb;
+      --muted:#a7b0c0;
+      --stroke:rgba(255,255,255,.14);
+      --shadow:0 18px 50px rgba(0,0,0,.45);
+      --radius:18px;
+      --accent1:#60a5fa;
+      --accent2:#22c55e;
+      --danger:#fb7185;
+      --warn:#fbbf24;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(900px 500px at 15% 10%, rgba(96,165,250,.20), transparent 60%),
+        radial-gradient(900px 500px at 90% 15%, rgba(34,197,94,.16), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:44px 16px;
+    }
+
+    .wrap{width:min(920px, 100%)}
+
+    header{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      justify-content:space-between;
+      margin-bottom:16px;
+    }
+
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    h1{
+      margin:0;
+      font-size:22px;
+      letter-spacing:.2px;
+    }
+
+    .sub{
+      margin:0;
+      color:var(--muted);
+      font-size:13.5px;
+      line-height:1.45;
+      max-width:72ch;
+    }
+
+    .card{
+      background:linear-gradient(180deg, var(--card), var(--card2));
+      border:1px solid var(--stroke);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+    }
+
+    @media (max-width: 860px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .panel{
+      padding:18px;
+    }
+
+    .panel + .panel{
+      border-left:1px solid var(--stroke);
+    }
+
+    @media (max-width: 860px){
+      .panel + .panel{border-left:0;border-top:1px solid var(--stroke)}
+    }
+
+    .fieldRow{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    @media (max-width: 520px){
+      .fieldRow{grid-template-columns:1fr}
+    }
+
+    label{
+      display:block;
+      font-size:13px;
+      color:var(--muted);
+      margin:10px 0 6px;
+    }
+
+    input{
+      width:100%;
+      padding:11px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.22);
+      color:var(--text);
+      outline:none;
+      transition: border-color .15s ease, transform .05s ease, background .15s ease;
+    }
+
+    input::placeholder{color:rgba(167,176,192,.7)}
+    input:focus{border-color:rgba(96,165,250,.55); background:rgba(0,0,0,.28)}
+
+    .actions{
+      display:flex;
+      gap:10px;
+      margin-top:14px;
+      flex-wrap:wrap;
+    }
+
+    button{
+      border:0;
+      border-radius:14px;
+      padding:11px 14px;
+      font-weight:800;
+      cursor:pointer;
+      color:#06101f;
+      background: linear-gradient(135deg, var(--accent1), #a78bfa);
+      box-shadow: 0 10px 26px rgba(96,165,250,.22);
+      transition: transform .06s ease, filter .15s ease;
+      flex:1;
+      min-width:180px;
+    }
+
+    button:hover{filter:brightness(1.03)}
+    button:active{transform:translateY(1px)}
+
+    .ghost{
+      background:transparent;
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.18);
+      box-shadow:none;
+      flex:0 0 auto;
+      min-width:auto;
+    }
+
+    .hint{
+      margin-top:10px;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.18);
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.55;
+    }
+
+    .hint b{color:var(--text)}
+
+    .result{
+      padding:18px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .badgeRow{display:flex;gap:8px;flex-wrap:wrap}
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.18);
+      color:var(--muted);
+      font-size:12.5px;
+    }
+
+    .badge strong{color:var(--text)}
+
+    .big{
+      font-size:34px;
+      font-weight:950;
+      letter-spacing:-.4px;
+      line-height:1.1;
+      margin:2px 0 0;
+    }
+
+    .modelLine{
+      color:var(--muted);
+      font-size:13.5px;
+      line-height:1.5;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:800;
+      font-size:12px;
+      letter-spacing:.2px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+    }
+
+    .chip.ok{border-color:rgba(34,197,94,.35); background:rgba(34,197,94,.12)}
+    .chip.warn{border-color:rgba(251,191,36,.35); background:rgba(251,191,36,.12)}
+    .chip.danger{border-color:rgba(251,113,133,.35); background:rgba(251,113,133,.12)}
+
+    .error{
+      border:1px solid rgba(251,113,133,.35);
+      background:rgba(251,113,133,.10);
+      color:rgba(255,255,255,.92);
+      padding:12px 12px;
+      border-radius:14px;
+      font-size:13.5px;
+      line-height:1.5;
+    }
+
+    .footerNote{
+      margin-top:12px;
+      color:rgba(167,176,192,.75);
+      font-size:12.5px;
+      line-height:1.5;
+      padding:0 2px;
+    }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:12px;
+      padding:2px 6px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.25);
+      color:rgba(229,231,235,.95);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>Hissedilen Sıcaklık Hesaplayıcı</h1>
+        <p class="sub">
+          Girilen değerlere göre uygun koşullarda <b>Soğuk Hissi (Wind Chill)</b> veya <b>Sıcaklık İndeksi (Heat Index)</b>
+          kullanılır. Koşullar uygun değilse “hissedilen” değer, girilen sıcaklığa eşit kabul edilir.
+        </p>
+      </div>
+    </header>
+
+    <div class="card grid">
+      <div class="panel">
+        <form id="form" novalidate>
+          <div class="fieldRow">
+            <div>
+              <label for="temp">Sıcaklık (°C)</label>
+              <input id="temp" type="number" step="0.1" inputmode="decimal" placeholder="Örn: 5" required />
+            </div>
+            <div>
+              <label for="wind">Rüzgar hızı (km/s)</label>
+              <input id="wind" type="number" step="0.1" inputmode="decimal" placeholder="Örn: 20 (opsiyonel)" />
+            </div>
+          </div>
+
+          <label for="hum">Nem (%)</label>
+          <input id="hum" type="number" step="1" min="0" max="100" inputmode="numeric" placeholder="Örn: 60 (opsiyonel)" />
+
+          <div class="actions">
+            <button type="submit">Hesapla</button>
+            <button class="ghost" type="button" id="clearBtn">Temizle</button>
+          </div>
+
+          <div class="hint">
+            - <b>Soğuk Hissi (Wind Chill)</b> genelde \(T \le 10°C\) ve rüzgar \(\ge 4.8\) km/s iken anlamlıdır.<br />
+            - <b>Sıcaklık İndeksi (Heat Index)</b> genelde \(T \ge 27°C\) ve nem \(\ge 40\%\) iken daha anlamlıdır.
+          </div>
+
+          <div class="footerNote">
+            İpucu: Formu hesaplamak için <span class="kbd">Enter</span> da kullanabilirsin.
+          </div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="result">
+          <div class="badgeRow">
+            <span class="badge"><strong>Model</strong>: <span id="modelText">—</span></span>
+            <span class="badge"><strong>Risk</strong>: <span id="riskText">—</span></span>
+          </div>
+
+          <div>
+            <div class="modelLine">Hissedilen sıcaklık</div>
+            <div class="big" id="feelsLikeText">—</div>
+            <div class="modelLine" id="metaText"></div>
+          </div>
+
+          <div id="errorBox" class="error" hidden></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function round1(n) { return Math.round(n * 10) / 10; }
+    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+    // Canada "Wind Chill Index" formülü (°C, km/s)
+    function windChillC(tempC, windKmh) {
+      // WCI = 13.12 + 0.6215T - 11.37V^0.16 + 0.3965T V^0.16
+      const v16 = Math.pow(windKmh, 0.16);
+      return 13.12 + 0.6215 * tempC - 11.37 * v16 + 0.3965 * tempC * v16;
+    }
+
+    // NOAA "Heat Index" (Fahrenheit tabanlı regresyon). Çıktı °C'ye çevrilir.
+    function heatIndexC(tempC, rh) {
+      const T = (tempC * 9/5) + 32; // °F
+      const R = rh;
+
+      const HI =
+        -42.379 +
+        2.04901523 * T +
+        10.14333127 * R +
+        -0.22475541 * T * R +
+        -0.00683783 * T * T +
+        -0.05481717 * R * R +
+        0.00122874 * T * T * R +
+        0.00085282 * T * R * R +
+        -0.00000199 * T * T * R * R;
+
+      return (HI - 32) * 5/9; // °C
+    }
+
+    function computeFeelsLike(tempC, windKmh, rh) {
+      const hasWind = Number.isFinite(windKmh);
+      const hasHum = Number.isFinite(rh);
+
+      const canWindChill = hasWind && tempC <= 10 && windKmh >= 4.8;
+      const canHeatIndex = hasHum && tempC >= 27 && rh >= 40;
+
+      if (canWindChill) return { model: "Soğuk Hissi (Wind Chill)", feelsLike: windChillC(tempC, windKmh) };
+      if (canHeatIndex) return { model: "Sıcaklık İndeksi (Heat Index)", feelsLike: heatIndexC(tempC, rh) };
+      return { model: "Standart (Doğrudan)", feelsLike: tempC };
+    }
+
+    function riskChipForFeelsLike(feelsLikeC) {
+      // Basit (yaklaşık) bir sınıflandırma: amaç UI geri bildirimi.
+      if (feelsLikeC <= -10) return { text: "Çok soğuk", cls: "danger" };
+      if (feelsLikeC < 0) return { text: "Soğuk", cls: "warn" };
+      if (feelsLikeC <= 30) return { text: "Normal", cls: "ok" };
+      if (feelsLikeC <= 40) return { text: "Sıcak", cls: "warn" };
+      return { text: "Aşırı sıcak", cls: "danger" };
+    }
+
+    function setRiskUI(feelsLikeC) {
+      const risk = riskChipForFeelsLike(feelsLikeC);
+      $("riskText").innerHTML = `<span class="chip ${risk.cls}">${risk.text}</span>`;
+    }
+
+    function setError(msg) {
+      const box = $("errorBox");
+      if (!msg) {
+        box.hidden = true;
+        box.textContent = "";
+        return;
+      }
+      box.hidden = false;
+      box.textContent = msg;
+    }
+
+    function setResult({ model, feelsLike, tempC, windKmh, rh }) {
+      $("modelText").textContent = model;
+      $("feelsLikeText").textContent = `${round1(feelsLike)} °C`;
+
+      const parts = [`Sıcaklık: ${round1(tempC)}°C`];
+      if (Number.isFinite(windKmh)) parts.push(`Rüzgar: ${round1(windKmh)} km/s`);
+      if (Number.isFinite(rh)) parts.push(`Nem: ${Math.round(rh)}%`);
+      $("metaText").textContent = parts.join(" • ");
+
+      setRiskUI(feelsLike);
+    }
+
+    function clearAll() {
+      $("temp").value = "";
+      $("wind").value = "";
+      $("hum").value = "";
+      $("modelText").textContent = "—";
+      $("riskText").textContent = "—";
+      $("feelsLikeText").textContent = "—";
+      $("metaText").textContent = "";
+      setError("");
+      $("temp").focus();
+    }
+
+    $("clearBtn").addEventListener("click", clearAll);
+
+    $("form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      setError("");
+
+      const tempRaw = $("temp").value.trim();
+      const windRaw = $("wind").value.trim();
+      const humRaw  = $("hum").value.trim();
+
+      const tempC = tempRaw === "" ? NaN : Number(tempRaw);
+      const windKmh = windRaw === "" ? NaN : Number(windRaw);
+      const rh = humRaw === "" ? NaN : Number(humRaw);
+
+      if (!Number.isFinite(tempC)) {
+        setError("Sıcaklık değeri zorunludur. Lütfen °C cinsinden bir sayı gir.");
+        return;
+      }
+      if (Number.isFinite(windKmh) && windKmh < 0) {
+        setError("Rüzgar hızı negatif olamaz.");
+        return;
+      }
+      if (Number.isFinite(rh) && (rh < 0 || rh > 100)) {
+        setError("Nem 0 ile 100 arasında olmalıdır.");
+        return;
+      }
+
+      const windSafe = Number.isFinite(windKmh) ? Math.max(0, windKmh) : NaN;
+      const rhSafe = Number.isFinite(rh) ? clamp(rh, 0, 100) : NaN;
+
+      const { model, feelsLike } = computeFeelsLike(tempC, windSafe, rhSafe);
+      setResult({ model, feelsLike, tempC, windKmh: windSafe, rh: rhSafe });
+    });
+
+    // Sayfa açılışında örnek değerler (istersen kaldırabilirsin)
+    // $("temp").value = "5";
+    // $("wind").value = "20";
+    // $("hum").value = "60";
+  </script>
+</body>
+</html>

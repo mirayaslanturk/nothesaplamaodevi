@@ -428,7 +428,7 @@
       const rh = humRaw === "" ? NaN : Number(humRaw);
 
       if (!Number.isFinite(tempC)) {
-        setError("Sıcaklık değeri zorunludur. Lütfen °C cinsinden bir sayı gir.");
+        setError("Sıcaklık değeri girilmesi zorunludur. Lütfen °C cinsinden bir sayı giriniz.");
         return;
       }
       if (Number.isFinite(windKmh) && windKmh < 0) {
